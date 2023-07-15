@@ -1,0 +1,8 @@
+[web_servers]
+vm1@192.168.10.106
+
+[db_servers]
+vm2@192.168.10.105
+
+[file_servers]
+vm3@192.168.10.104

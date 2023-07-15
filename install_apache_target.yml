@@ -1,0 +1,49 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates (Ubuntu)
+    apt:
+      update_cache: yes
+    when: ansible_distribution == "Ubuntu"
+
+
+- hosts: web_servers
+  become: true
+  tasks:
+
+
+  - name: install apache2 package
+    apt:
+      name:
+        - apache2
+        - libapache2-mod-php
+      state: latest
+    when: ansible_distribution in ["Ubuntu","Debian"] and ansible_distribution_version == "22.04"
+
+
+- hosts: db_servers
+  become: true
+  tasks:
+
+
+  - name: install postgresql package (Ubuntu)
+    package:
+      name: 
+        - postgresql
+        - postgresql-contrib
+      state: latest
+    when: ansible_distribution in ["Ubuntu","Debian"] and ansible_distribution_version == "22.04"
+
+
+- hosts: file_servers
+  become: true
+  tasks:
+
+  - name: install samba package
+    package:
+      name: samba
+      state: latest
+
