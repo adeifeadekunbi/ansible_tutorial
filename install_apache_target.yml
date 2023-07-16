@@ -5,9 +5,31 @@
   pre_tasks:
 
   - name: install updates (Ubuntu)
+    tags: always
     apt:
       update_cache: yes
     when: ansible_distribution == "Ubuntu"
+
+  - name: create simone user
+    tags: always
+    user:
+      name: simone
+      groups: root
+
+  - name: add ssh key for simone
+    tags: always
+    authorized_key:
+      user: simone
+      key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDTlNGrrTtxDJXrUO/rCWSnPfsiEc45RMadAQaZykKdOKiylU+02sQUvryU2b6DyBWj0gThs8NmckPUw3XKp6LW+x4FBzj5djiwJTcCLFIuCh+pKeItvra7N5NBTJWjXlk9ulqEscHChAM6pbLJy+eNs7Ei8k11LLSd8EGWkUSHc8iK8Gd0zeNuo792OJjGXZQDNquyPcGMgHnuDBWnWTY2+CVOOyUjweawI0qFOeR2xv50KnQ4De1ockhEIAkvpACsSICNShq8Bfk+soqynubhrbxlGnJRlF/GLN/vj0TfyePQFVjpKXp2VyncIqUe2NPaHL3ts67rPXtLTVAqeeiEROUPYO1xocm7K7x43P9oipO9fmkHikAXv+rxMmy1gnVFueSP6CuDKcTaAzALAVpKz1qaRb4NDtDqgs0A/+dsqthiWy2/H2T8/aqq7+BhoE7sp4A+6cttrlCJfBmVC0wUVYEbHrTk/TpdCd84OqLyVE97wQMB4ZLV8m657YKW7pk= master@master"
+
+  - name: add sudoers file for simone
+    tags: always
+    copy:
+      src: sudoer_simone
+      dest: /etc/sudoers.d/simone
+      owner: root
+      group: root
+      mode: 0440
 
 
 - hosts: web_servers
@@ -16,6 +38,7 @@
 
 
   - name: install apache2 package
+    tags: apache,php, Ubuntu 
     apt:
       name:
         - apache2
@@ -30,6 +53,7 @@
 
 
   - name: install postgresql package (Ubuntu)
+    tags: db, postgresql, ubuntu
     package:
       name: 
         - postgresql
@@ -37,12 +61,44 @@
       state: latest
     when: ansible_distribution in ["Ubuntu","Debian"] and ansible_distribution_version == "22.04"
 
+  - name: start PostgreSQL service
+    systemd:
+      name: postgresql
+      state: started
+      enabled: yes
+
+  - name: copy default html file for site
+    tags: apache,httpd
+    copy:
+      src: default_site.html
+      dest: /var/www/html/index.html
+      owner: root
+      group: root
+      mode: 0644
+
+- hosts: workstations
+  become: true
+  tasks:
+
+  - name:
+    package:
+      name: unzip
+
+  - name: install terraform
+    unarchive:
+      src: https://releases.hashicorp.com/terraform/0.12.28/terraform_0.12.28_linux_amd64.zip
+      dest: /usr/local/bin
+      remote_src: yes
+      mode: 0755
+      owner: root
+      group: root
 
 - hosts: file_servers
   become: true
   tasks:
 
   - name: install samba package
+    tags: samba
     package:
       name: samba
       state: latest
